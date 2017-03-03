@@ -42,11 +42,23 @@ class Dungeon:
                 show_recursive(child)
         show_recursive(self.model_root)
         self.model_root.flatten_strong()
+        self.sizex = sizex
+        self.sizey = sizey
+        self._bsp = bsp
 
         for y in bsp:
             for x in y:
                 print(x, end=" ")
             print()
+
+    def _get_tile(self, x, y):
+        tx = int(x + 0.5 + self.sizex / 2.0)
+        ty = int(y + 0.5 + self.sizey / 2.0)
+
+        return self._bsp[ty][tx]
+
+    def is_walkable(self, x, y):
+        return self._get_tile(x, y) != '.'
 
 
 class GameApp(ShowBase):
@@ -114,14 +126,18 @@ class GameApp(ShowBase):
     def update(self, dt):
         # Update player position
         movvec = self.target - self.player.get_pos()
+        newpos = self.player.get_pos()
         if movvec.length_squared() < 0.4:
-            self.player.set_x(self.target.x)
-            self.player.set_y(self.target.y)
+            newpos.set_x(self.target.x)
+            newpos.set_y(self.target.y)
         else:
             movvec.normalize()
             movvec *= 25 * dt
-            self.player.set_x(self.player.get_x() + movvec.x)
-            self.player.set_y(self.player.get_y() + movvec.y)
+            newpos.set_x(self.player.get_x() + movvec.x)
+            newpos.set_y(self.player.get_y() + movvec.y)
+
+        if self.dungeon.is_walkable(*newpos.xy):
+            self.player.set_pos(newpos)
 
         if not self.debug_cam and self.mouseWatcherNode.has_mouse():
             mx, my = self.mouseWatcherNode.get_mouse()
