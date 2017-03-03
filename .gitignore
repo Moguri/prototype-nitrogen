@@ -74,6 +74,12 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# Vim swap files
+*.swp
+
 # Panda3D files
-.bam
+*.bam
+
+# Nitrogen files
+.pman.user
 user.prc
