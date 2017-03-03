@@ -7,10 +7,32 @@ import panda3d.core as p3d
 import blenderpanda
 import nitrogen.bsp
 
+
+app_root_dir = sys.path[0]
+if not app_root_dir:
+    print("emptry app_root_dir")
+    sys.exit()
+
+# prc files to load sorted by load order
+config_files = [
+    os.path.join(app_root_dir, 'config', 'game.prc'),
+    os.path.join(app_root_dir, 'config', 'user.prc'),
+]
+
+
 p3d.load_prc_file_data(
     '',
     'framebuffer-srgb true\n'
 )
+
+
+for config_file in config_files:
+    if os.path.exists(config_file):
+        print("Loading config file:", config_file)
+        p3d.load_prc_file(config_file)
+    else:
+        print("Could not find config file", config_file)
+
 
 class Dungeon:
     def __init__(self, sizex, sizey):
