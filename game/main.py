@@ -70,10 +70,14 @@ class GameApp(ShowBase):
         ShowBase.__init__(self)
         blenderpanda.init(self)
 
-        self.disableMouse()
         self.accept('escape', sys.exit)
         self.accept('mouse1', self.move_player)
         self.accept('f1', self.toggle_debug_cam)
+
+        wp = p3d.WindowProperties()
+        wp.set_mouse_mode(p3d.WindowProperties.M_confined)
+        self.win.request_properties(wp)
+        self.disableMouse()
 
         dungeon = Dungeon(50, 50)
         dungeon.model_root.reparent_to(self.render)
