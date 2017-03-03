@@ -96,10 +96,12 @@ class GameApp(ShowBase):
         self.accept('mouse1', self.move_player)
         self.accept('f1', self.toggle_debug_cam)
 
+        self.disableMouse()
+        wp = self.win.get_properties()
+        self.win.move_pointer(0, wp.get_x_size() // 2, wp.get_y_size() // 2)
         wp = p3d.WindowProperties()
         wp.set_mouse_mode(p3d.WindowProperties.M_confined)
         self.win.request_properties(wp)
-        self.disableMouse()
 
         dungeon = Dungeon(50, 50)
         dungeon.model_root.reparent_to(self.render)
