@@ -36,20 +36,26 @@ for config_file in config_files:
 
 class Dungeon:
     def __init__(self, sizex, sizey):
+        self.sizex = sizex
+        self.sizey = sizey
+        self.model_root = p3d.NodePath('Dungeon')
+        self.player_start = p3d.LVector3(0, 0, 0)
+        self._telemap = {}
+
+        # Load models
         models = base.loader.load_model('dungeon.bam')
         tile_model = models.find('**/DungeonTile')
         tele_model = models.find('**/Teleporter')
         telelink_model = models.find('**/TeleLink')
 
-        bsp = nitrogen.bsp.gen(sizex, sizey)
+        # Generate dungeon tile map
+        self._bsp = nitrogen.bsp.gen(sizex, sizey)
 
-        self.model_root = p3d.NodePath('Dungeon')
-        self.player_start = p3d.LVector3(0, 0, 0)
-        self._telemap = {}
 
-        for y in range(len(bsp)):
-            for x in range(len(bsp[y])):
-                tile = bsp[y][x]
+        # Parse tile map and place models
+        for y in range(len(self._bsp)):
+            for x in range(len(self._bsp[y])):
+                tile = self._bsp[y][x]
 
                 if tile != '.':
                     tilenp = self.model_root.attach_new_node('TileNode')
@@ -70,17 +76,29 @@ class Dungeon:
                         else:
                             self._telemap[tile].append((x, y))
 
+                            # This is the second teleporter we found for this pair so add a link
+                            tlnp = self.model_root.attach_new_node('TeleporterLink')
+                            telelink_model.instance_to(tlnp)
+                            tlnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+
+                            tovec = p3d.LVector3(self._tile_to_world(*self._get_tele_loc_from_tile(x, y)), tlnp.get_z())
+                            linkvec = tovec - tlnp.get_pos()
+
+                            tlnp.set_scale(1, linkvec.length(), 1)
+                            tlnp.look_at(tovec)
+
+        # Make sure all placed models are visible
         def show_recursive(node):
             node.show()
             for child in node.get_children():
                 show_recursive(child)
         show_recursive(self.model_root)
-        self.model_root.flatten_strong()
-        self.sizex = sizex
-        self.sizey = sizey
-        self._bsp = bsp
 
-        for y in bsp:
+        # Flatten for performance (we've just place a lot of tile objects that don't move)
+        self.model_root.flatten_strong()
+
+        # Display the tile map for debugging
+        for y in self._bsp:
             for x in y:
                 print(x, end=" ")
             print()
@@ -97,7 +115,7 @@ class Dungeon:
         if not tile.isdigit():
             return None
 
-        return [i for i in self._telemap[tile] if i[0] != x and i[1] != y][0]
+        return [i for i in self._telemap[tile] if i[0] != x or i[1] != y][0]
 
     def get_tele_loc(self, x, y):
         loc = self._get_tele_loc_from_tile(*self._world_to_tile(x, y))
