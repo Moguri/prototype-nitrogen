@@ -38,10 +38,14 @@ class Dungeon:
     def __init__(self, sizex, sizey):
         models = base.loader.load_model('dungeon.bam')
         tile_model = models.find('**/DungeonTile')
+        tele_model = models.find('**/Teleporter')
+        telelink_model = models.find('**/TeleLink')
+
         bsp = nitrogen.bsp.gen(sizex, sizey)
 
         self.model_root = p3d.NodePath('Dungeon')
         self.player_start = p3d.LVector3(0, 0, 0)
+        self._telemap = {}
 
         for y in range(len(bsp)):
             for x in range(len(bsp[y])):
@@ -56,7 +60,15 @@ class Dungeon:
                     if tile == '*':
                         self.player_start.x = tile_pos.x
                         self.player_start.y = tile_pos.y
+                    elif tile.isdigit():
+                        telenp = self.model_root.attach_new_node('Teleporter')
+                        tele_model.instance_to(telenp)
+                        telenp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
 
+                        if tile not in self._telemap:
+                            self._telemap[tile] = [(x, y)]
+                        else:
+                            self._telemap[tile].append((x, y))
 
         def show_recursive(node):
             node.show()
@@ -73,14 +85,31 @@ class Dungeon:
                 print(x, end=" ")
             print()
 
-    def _get_tile(self, x, y):
-        tx = int(x + 0.5 + self.sizex / 2.0)
-        ty = int(y + 0.5 + self.sizey / 2.0)
+    def _tile_to_world(self, x, y):
+        return x - self.sizex / 2.0, y - self.sizey / 2.0
 
-        return self._bsp[ty][tx]
+    def _world_to_tile(self, x, y):
+        return int(x + 0.5 + self.sizex / 2.0), int(y + 0.5 + self.sizey / 2.0)
+
+    def _get_tele_loc_from_tile(self, x, y):
+        tile = self._bsp[y][x]
+        
+        if not tile.isdigit():
+            return None
+
+        return [i for i in self._telemap[tile] if i[0] != x and i[1] != y][0]
+
+    def get_tele_loc(self, x, y):
+        loc = self._get_tele_loc_from_tile(*self._world_to_tile(x, y))
+        if loc is not None:
+            loc = self._tile_to_world(*loc)
+
+        return loc
 
     def is_walkable(self, x, y):
-        return self._get_tile(x, y) != '.'
+        tx, ty = self._world_to_tile(x, y)
+        tile = self._bsp[ty][tx]
+        return tile != '.'
 
 
 class GameApp(ShowBase):
@@ -126,6 +155,7 @@ class GameApp(ShowBase):
 
         self.dungeon = dungeon
         self.player = playernp
+        self.last_tele_loc = None
         self.target = self.player.get_pos()
         self.debug_cam = False
         self.reset_camera()
@@ -170,6 +200,19 @@ class GameApp(ShowBase):
 
         if self.dungeon.is_walkable(*newpos.xy):
             self.player.set_pos(newpos)
+
+        if self.last_tele_loc is not None:
+            if (self.last_tele_loc - self.player.get_pos()).length_squared() > 3:
+                self.last_tele_loc = None
+
+        if self.last_tele_loc is None:
+            teleloc = self.dungeon.get_tele_loc(*newpos.xy)
+            if teleloc is not None:
+                newpos.x, newpos.y = teleloc
+                self.last_tele_loc = p3d.LVector3(newpos)
+                self.target = p3d.LVector3(newpos)
+                self.player.set_pos(newpos)
+                self.reset_camera()
 
         if not self.debug_cam and self.mouseWatcherNode.has_mouse():
             mx, my = self.mouseWatcherNode.get_mouse()
