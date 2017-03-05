@@ -74,6 +74,7 @@ class Dungeon:
                         spanwnp = p3d.NodePath('Spawn')
                         spawn_model.instance_to(spanwnp)
                         spanwnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+                        spanwnp.set_h(180)
                         self.spawners.append(spanwnp)
                     elif tile.isdigit():
                         # Teleporter
@@ -123,7 +124,7 @@ class Dungeon:
 
     def _get_tele_loc_from_tile(self, x, y):
         tile = self._bsp[y][x]
-        
+
         if not tile.isdigit():
             return None
 
@@ -230,6 +231,7 @@ class GameApp(ShowBase):
             movvec *= self.PLAYER_SPEED * dt
             newpos.set_x(self.player.get_x() + movvec.x)
             newpos.set_y(self.player.get_y() + movvec.y)
+            self.player.look_at(newpos)
 
         if self.dungeon.is_walkable(*newpos.xy):
             self.player.set_pos(newpos)
