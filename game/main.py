@@ -41,6 +41,7 @@ class Dungeon:
         self.sizex = sizex
         self.sizey = sizey
         self.model_root = p3d.NodePath('Dungeon')
+        self._tile_root = self.model_root.attach_new_node('Tiles')
         self.player_start = p3d.LVector3(0, 0, 0)
         self._telemap = {}
         self.spawners = []
@@ -62,7 +63,7 @@ class Dungeon:
                 tile = self._bsp[y][x]
 
                 if tile != '.':
-                    tilenp = self.model_root.attach_new_node('TileNode')
+                    tilenp = self._tile_root.attach_new_node('TileNode')
                     tile_model.instance_to(tilenp)
                     tile_pos = p3d.LVector3(x - sizex / 2.0, y - sizey / 2.0, -random.random() * 0.1)
                     tilenp.set_pos(tile_pos)
@@ -110,7 +111,7 @@ class Dungeon:
             show_recursive(spawner)
 
         # Flatten for performance (we've just place a lot of tile objects that don't move)
-        #self.model_root.flatten_strong()
+        #self._tile_root.flatten_strong()
 
         # Display the tile map for debugging
         for y in self._bsp:
@@ -177,9 +178,7 @@ class GameApp(ShowBase):
         dlight.set_shadow_caster(True, 4096, 4096)
         dlnp = self.render.attach_new_node(dlight)
         dlnp.set_z(10)
-        #dlnp.set_y(-100)
         dlnp.set_p(-90)
-        #dlnp.set_p(-45)
         lens = dlight.get_lens()
         lens.set_film_size(60)
         lens.set_near(1)
@@ -187,11 +186,12 @@ class GameApp(ShowBase):
         self.render.set_light(dlnp)
 
         player = self.loader.load_model('dungeon.bam').find('**/MonsterSpawn').node()
-        playernp = dungeon.model_root.attach_new_node(player)
+        playernp = self.render.attach_new_node(player)
         playernp.set_pos(dungeon.player_start)
-        playernp.set_z(1)
+        playernp.set_z(1.5)
 
         #self.render.ls()
+        #self.render.analyze()
 
         self.dungeon = dungeon
         self.player = playernp
