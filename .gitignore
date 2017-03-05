@@ -83,3 +83,4 @@ ENV/
 # Nitrogen files
 .pman.user
 user.prc
+game/assets
