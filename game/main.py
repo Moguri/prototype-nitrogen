@@ -31,6 +31,7 @@ p3d.load_prc_file_data(
 for config_file in config_files:
     if os.path.exists(config_file):
         print("Loading config file:", config_file)
+        config_file = p3d.Filename.from_os_specific(config_file)
         p3d.load_prc_file(config_file)
     else:
         print("Could not find config file", config_file)
