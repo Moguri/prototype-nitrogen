@@ -6,6 +6,7 @@ from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
 import blenderpanda
 import nitrogen.bsp
+from bamboo.inputmapper import InputMapper
 
 
 app_root_dir = sys.path[0]
@@ -14,9 +15,10 @@ if not app_root_dir:
     sys.exit()
 
 # prc files to load sorted by load order
+config_root_dir = os.path.join(app_root_dir, 'config')
 config_files = [
-    os.path.join(app_root_dir, 'config', 'game.prc'),
-    os.path.join(app_root_dir, 'config', 'user.prc'),
+    os.path.join(config_root_dir, 'game.prc'),
+    os.path.join(config_root_dir, 'user.prc'),
 ]
 
 
@@ -152,9 +154,11 @@ class GameApp(ShowBase):
         ShowBase.__init__(self)
         blenderpanda.init(self)
 
-        self.accept('escape', sys.exit)
-        self.accept('mouse1', self.move_player)
-        self.accept('f1', self.toggle_debug_cam)
+        self.input_mapper = InputMapper(os.path.join(config_root_dir, 'input.conf'), verbose=True)
+
+        self.accept('quit', sys.exit)
+        self.accept('move', self.move_player)
+        self.accept('toggle-debug-cam', self.toggle_debug_cam)
 
         self.disableMouse()
         wp = self.win.get_properties()
