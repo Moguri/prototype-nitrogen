@@ -41,10 +41,12 @@ class Dungeon:
         self.model_root = p3d.NodePath('Dungeon')
         self.player_start = p3d.LVector3(0, 0, 0)
         self._telemap = {}
+        self.spawners = []
 
         # Load models
         models = base.loader.load_model('dungeon.bam')
         tile_model = models.find('**/DungeonTile')
+        spawn_model = models.find('**/MonsterSpawn')
         tele_model = models.find('**/Teleporter')
         telelink_model = models.find('**/TeleLink')
 
@@ -64,9 +66,17 @@ class Dungeon:
                     tilenp.set_pos(tile_pos)
 
                     if tile == '*':
+                        # Player start
                         self.player_start.x = tile_pos.x
                         self.player_start.y = tile_pos.y
+                    elif tile == '$':
+                        # Monster spawn
+                        spanwnp = p3d.NodePath('Spawn')
+                        spawn_model.instance_to(spanwnp)
+                        spanwnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+                        self.spawners.append(spanwnp)
                     elif tile.isdigit():
+                        # Teleporter
                         telenp = self.model_root.attach_new_node('Teleporter')
                         tele_model.instance_to(telenp)
                         telenp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
@@ -93,6 +103,8 @@ class Dungeon:
             for child in node.get_children():
                 show_recursive(child)
         show_recursive(self.model_root)
+        for spawner in self.spawners:
+            show_recursive(spawner)
 
         # Flatten for performance (we've just place a lot of tile objects that don't move)
         self.model_root.flatten_strong()
@@ -152,6 +164,8 @@ class GameApp(ShowBase):
 
         dungeon = Dungeon(50, 50)
         dungeon.model_root.reparent_to(self.render)
+        for spawner in dungeon.spawners:
+            spawner.reparent_to(self.render)
 
         dlight = p3d.DirectionalLight('sun')
         dlnp = self.render.attach_new_node(dlight)
@@ -166,6 +180,7 @@ class GameApp(ShowBase):
 
         player = self.loader.load_model('dungeon.bam').find('**/MonsterSpawn').node()
         playernp = dungeon.model_root.attach_new_node(player)
+        playernp.set_color_scale(0, 2, 0, 1)
         playernp.set_pos(dungeon.player_start)
         playernp.set_z(1)
 
