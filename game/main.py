@@ -169,6 +169,7 @@ class GameApp(ShowBase):
             spawner.reparent_to(self.render)
 
         dlight = p3d.DirectionalLight('sun')
+        dlight.set_color(p3d.LVector3(0.2, 0.2, 0.2))
         dlnp = self.render.attach_new_node(dlight)
         dlnp.set_p(-45)
         self.render.set_light(dlnp)
