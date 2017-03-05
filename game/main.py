@@ -170,18 +170,11 @@ class GameApp(ShowBase):
 
         dlight = p3d.DirectionalLight('sun')
         dlnp = self.render.attach_new_node(dlight)
-        dlnp.set_pos(0, 0, 1)
-        dlnp.look_at(0, 0, 0)
+        dlnp.set_p(-45)
         self.render.set_light(dlnp)
-
-        alight = p3d.AmbientLight('amb')
-        alight.set_color(p3d.LVector3(0.2, 0.2, 0.2))
-        alnp = self.render.attach_new_node(alight)
-        self.render.set_light(alnp)
 
         player = self.loader.load_model('dungeon.bam').find('**/MonsterSpawn').node()
         playernp = dungeon.model_root.attach_new_node(player)
-        playernp.set_color_scale(0, 2, 0, 1)
         playernp.set_pos(dungeon.player_start)
         playernp.set_z(1)
 

@@ -1,6 +1,6 @@
 [general]
 name = Game
-render_plugin = 
+render_plugin = game/bamboo/rendermanager.py
 
 [build]
 asset_dir = assets/
