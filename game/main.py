@@ -48,7 +48,8 @@ class Dungeon:
         self.spawners = []
 
         # Load models
-        models = base.loader.load_model('dungeon.bam')
+        loader = p3d.Loader.get_global_ptr()
+        models = p3d.NodePath(loader.load_sync('dungeon.bam'))
         tile_model = models.find('**/DungeonTile')
         spawn_model = models.find('**/MonsterSpawn')
         tele_model = models.find('**/Teleporter')
@@ -207,7 +208,7 @@ class GameApp(ShowBase):
         self.reset_camera()
 
         def run_gamestate(task):
-            self.update(globalClock.get_dt())
+            self.update(p3d.ClockObject.get_global_clock().get_dt())
             return task.cont
         self.taskMgr.add(run_gamestate, 'GameState')
 
