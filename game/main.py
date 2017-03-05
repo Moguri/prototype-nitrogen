@@ -154,7 +154,7 @@ class GameApp(ShowBase):
         ShowBase.__init__(self)
         blenderpanda.init(self)
 
-        self.input_mapper = InputMapper(os.path.join(config_root_dir, 'input.conf'), verbose=True)
+        self.input_mapper = InputMapper(os.path.join(config_root_dir, 'input.conf'))
 
         self.accept('quit', sys.exit)
         self.accept('move', self.move_player)
