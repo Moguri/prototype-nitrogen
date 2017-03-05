@@ -146,7 +146,7 @@ class Dungeon:
 class GameApp(ShowBase):
     PLAYER_SPEED = 15
     CAM_MOVE_BORDER = 0.8
-    CAM_MOVE_SPEED  = 1
+    CAM_MOVE_SPEED  = 50
 
     def __init__(self):
         ShowBase.__init__(self)
@@ -245,17 +245,19 @@ class GameApp(ShowBase):
         if not self.debug_cam and self.mouseWatcherNode.has_mouse():
             mx, my = self.mouseWatcherNode.get_mouse()
             border = self.CAM_MOVE_BORDER
-            camspeed = self.CAM_MOVE_SPEED
             camdelta = p3d.LVector2(0, 0)
             if mx < -border:
-                camdelta.x -= camspeed
+                camdelta.x -= 1
             elif mx > border:
-                camdelta.x += camspeed
+                camdelta.x += 1
 
             if my < -border:
-                camdelta.y -= camspeed
+                camdelta.y -= 1
             elif my > border:
-                camdelta.y += camspeed
+                camdelta.y += 1
+
+            camdelta.normalize()
+            camdelta *= self.CAM_MOVE_SPEED * dt
 
             campos = self.cam.get_pos()
             campos.x += camdelta.x
