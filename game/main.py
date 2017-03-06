@@ -151,7 +151,7 @@ class Dungeon:
 class GameApp(ShowBase):
     PLAYER_SPEED = 15
     CAM_MOVE_BORDER = 0.8
-    CAM_MOVE_SPEED  = 50
+    CAM_MOVE_SPEED = 50
 
     def __init__(self):
         ShowBase.__init__(self)
@@ -302,5 +302,7 @@ class GameApp(ShowBase):
             self.target.set_y(worldpos.y)
 
 
-app = GameApp()
-app.run()
+if __name__ == '__main__':
+    app = GameApp()
+    app.run()
+
