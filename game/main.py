@@ -202,10 +202,10 @@ class GameApp(ShowBase):
         playernp.set_pos(dungeon.player_start)
         playernp.set_z(1.5)
         self.player_ranges = [
-            RangeIndicator('circle', radius=1.0),
-            RangeIndicator('circle', radius=2.0),
-            RangeIndicator('circle', radius=3.0),
-            RangeIndicator('circle', radius=4.0),
+            RangeIndicator('box', length=5, width=1),
+            RangeIndicator('circle', radius=2),
+            RangeIndicator('circle', radius=3),
+            RangeIndicator('circle', radius=4),
         ]
         for rangeindicator in self.player_ranges:
             rangeindicator.graphics.reparent_to(playernp)

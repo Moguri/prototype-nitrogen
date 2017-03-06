@@ -3,7 +3,7 @@ import math
 import panda3d.core as p3d
 
 
-_SDF_SIZE = 64
+_SDF_SIZE = 128
 
 
 def _lin_remap(value, low1, high1, low2, hight2):
@@ -17,17 +17,34 @@ def _make_sdf_circle():
     maxneg = -math.sqrt(2) + 1
 
     for imgx in range(_SDF_SIZE):
-        normx = (imgx / _SDF_SIZE) * 2.0 - 1.0
+        normx = (imgx / (_SDF_SIZE - 1)) * 2.0 - 1.0
         for imgy in range(_SDF_SIZE):
-            normy = (imgy / _SDF_SIZE) * 2.0 - 1.0
+            normy = (imgy / (_SDF_SIZE - 1)) * 2.0 - 1.0
 
             length = normx ** 2 + normy ** 2
             if length < 1.0:
-                dist = 1 - length
+                dist = _lin_remap(1 - length, 0, 1, 0.5, 1)
             else:
-                dist = -(length - 1)
+                dist = _lin_remap(-length + 1, maxneg, 0, 0, 0.5)
 
-            dist = _lin_remap(dist, maxneg, maxpos, 0, 1)
+            sdfimg.setXel(imgx, imgy, dist)
+
+    sdftex = p3d.Texture()
+    sdftex.load(sdfimg)
+    return sdftex
+
+
+def _make_sdf_box():
+    sdfimg = p3d.PNMImage(_SDF_SIZE, _SDF_SIZE)
+
+    for imgx in range(_SDF_SIZE):
+        normx = (imgx / _SDF_SIZE) * 2.0 - 1.0
+        absx = abs(normx)
+        for imgy in range(_SDF_SIZE):
+            normy = (imgy / _SDF_SIZE) * 2.0 - 1.0
+            absy = abs(normy)
+
+            dist = _lin_remap(max(absx, absy), 0, 1, 0.5, 1)
             sdfimg.setXel(imgx, imgy, dist)
 
     sdftex = p3d.Texture()
@@ -36,6 +53,7 @@ def _make_sdf_circle():
 
 
 _SDF_CIRCLE = _make_sdf_circle()
+_SDF_BOX = _make_sdf_box()
 
 
 _RI_VERT = """
@@ -66,6 +84,7 @@ out vec4 o_color;
 
 const float outline_dist = 0.47; // Between 0 and 0.5, 0 = thick outline, 0.5 = no outline
 const float smoothing = 0.001;
+const float debug_alpha = 0.2;
 
 void main() {
     float dist = texture(sdftex, texcoord).r;
@@ -83,21 +102,26 @@ _SHADER = p3d.Shader.make(p3d.Shader.SL_GLSL, _RI_VERT, _RI_FRAG)
 
 class RangeIndicator:
     def __init__(self, shape, **kwargs):
-        cardmaker = p3d.CardMaker('RI_' + shape)
-        cardmaker.set_frame(-1, 1, -1, 1)
-        card = p3d.NodePath(cardmaker.generate())
         sdftex = None
-        scale = p3d.LVector3(1.0, 1.0, 1.0)
 
         if shape == 'circle':
             sdftex = _SDF_CIRCLE
-            scale *= kwargs['radius']
+            frame = p3d.LVector4(-1, 1, -1, 1) * kwargs['radius']
+        elif shape == 'box':
+            sdftex = _SDF_BOX
+            halfwidth = kwargs['width'] / 2.0
+            frame = p3d.LVector4(-halfwidth, halfwidth, 0, kwargs['length'])
         else:
             raise ValueError("Unknown shape for RangeIndicator: {}".format(shape))
 
-        card.set_scale(scale)
+        cardmaker = p3d.CardMaker('RI_' + shape)
+        cardmaker.set_frame(frame)
+
+        card = p3d.NodePath(cardmaker.generate())
         card.set_p(-90)
         card.set_transparency(p3d.TransparencyAttrib.MAlpha)
+
+        card.set_texture(sdftex)
 
         card.set_shader(_SHADER)
         card.set_shader_input('sdftex', sdftex)
