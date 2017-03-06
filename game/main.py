@@ -9,16 +9,16 @@ import nitrogen.bsp
 from bamboo.inputmapper import InputMapper
 
 
-app_root_dir = sys.path[0]
-if not app_root_dir:
+APP_ROOT_DIR = sys.path[0]
+if not APP_ROOT_DIR:
     print("emptry app_root_dir")
     sys.exit()
 
 # prc files to load sorted by load order
-config_root_dir = os.path.join(app_root_dir, 'config')
-config_files = [
-    os.path.join(config_root_dir, 'game.prc'),
-    os.path.join(config_root_dir, 'user.prc'),
+CONFIG_ROOT_DIR = os.path.join(APP_ROOT_DIR, 'config')
+CONFIG_FILES = [
+    os.path.join(CONFIG_ROOT_DIR, 'game.prc'),
+    os.path.join(CONFIG_ROOT_DIR, 'user.prc'),
 ]
 
 
@@ -28,7 +28,7 @@ p3d.load_prc_file_data(
 )
 
 
-for config_file in config_files:
+for config_file in CONFIG_FILES:
     if os.path.exists(config_file):
         print("Loading config file:", config_file)
         config_file = p3d.Filename.from_os_specific(config_file)
@@ -157,7 +157,7 @@ class GameApp(ShowBase):
         ShowBase.__init__(self)
         blenderpanda.init(self)
 
-        self.input_mapper = InputMapper(os.path.join(config_root_dir, 'input.conf'))
+        self.input_mapper = InputMapper(os.path.join(CONFIG_ROOT_DIR, 'input.conf'))
 
         self.accept('quit', sys.exit)
         self.accept('move', self.move_player)
