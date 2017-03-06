@@ -143,8 +143,8 @@ class Dungeon:
         return loc
 
     def is_walkable(self, x, y):
-        tx, ty = self._world_to_tile(x, y)
-        tile = self._bsp[ty][tx]
+        tilex, tiley = self._world_to_tile(x, y)
+        tile = self._bsp[tiley][tilex]
         return tile != '.'
 
 
@@ -164,11 +164,11 @@ class GameApp(ShowBase):
         self.accept('toggle-debug-cam', self.toggle_debug_cam)
 
         self.disableMouse()
-        wp = self.win.get_properties()
-        self.win.move_pointer(0, wp.get_x_size() // 2, wp.get_y_size() // 2)
-        wp = p3d.WindowProperties()
-        wp.set_mouse_mode(p3d.WindowProperties.M_confined)
-        self.win.request_properties(wp)
+        winprops = self.win.get_properties()
+        self.win.move_pointer(0, winprops.get_x_size() // 2, winprops.get_y_size() // 2)
+        winprops = p3d.WindowProperties()
+        winprops.set_mouse_mode(p3d.WindowProperties.M_confined)
+        self.win.request_properties(winprops)
 
         dungeon = Dungeon(50, 50)
         dungeon.model_root.reparent_to(self.render)
@@ -263,17 +263,17 @@ class GameApp(ShowBase):
                 self.reset_camera()
 
         if not self.debug_cam and self.mouseWatcherNode.has_mouse():
-            mx, my = self.mouseWatcherNode.get_mouse()
+            mousex, mousey = self.mouseWatcherNode.get_mouse()
             border = self.CAM_MOVE_BORDER
             camdelta = p3d.LVector2(0, 0)
-            if mx < -border:
+            if mousex < -border:
                 camdelta.x -= 1
-            elif mx > border:
+            elif mousex > border:
                 camdelta.x += 1
 
-            if my < -border:
+            if mousey < -border:
                 camdelta.y -= 1
-            elif my > border:
+            elif mousey > border:
                 camdelta.y += 1
 
             camdelta.normalize()
