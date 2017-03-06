@@ -6,6 +6,7 @@ from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
 import blenderpanda
 import nitrogen.bsp
+from nitrogen.rangeindicator import RangeIndicator
 from bamboo.inputmapper import InputMapper
 
 
@@ -160,8 +161,12 @@ class GameApp(ShowBase):
         self.input_mapper = InputMapper(os.path.join(CONFIG_ROOT_DIR, 'input.conf'))
 
         self.accept('quit', sys.exit)
-        self.accept('move', self.move_player)
         self.accept('toggle-debug-cam', self.toggle_debug_cam)
+        self.accept('move', self.move_player)
+        self.accept('ability1', self.toggle_range, [0])
+        self.accept('ability2', self.toggle_range, [1])
+        self.accept('ability3', self.toggle_range, [2])
+        self.accept('ability4', self.toggle_range, [3])
 
         self.disableMouse()
         winprops = self.win.get_properties()
@@ -196,6 +201,15 @@ class GameApp(ShowBase):
         playernp = self.render.attach_new_node(player)
         playernp.set_pos(dungeon.player_start)
         playernp.set_z(1.5)
+        self.player_ranges = [
+            RangeIndicator('circle', radius=2.0),
+            RangeIndicator('circle', radius=2.0),
+            RangeIndicator('circle', radius=2.0),
+            RangeIndicator('circle', radius=2.0),
+        ]
+        for rangeindicator in self.player_ranges:
+            rangeindicator.graphics.reparent_to(playernp)
+            rangeindicator.visible = False
 
         #self.render.ls()
         #self.render.analyze()
@@ -223,6 +237,10 @@ class GameApp(ShowBase):
             self.disableMouse()
             self.reset_camera()
             self.debug_cam = False
+
+    def toggle_range(self, ability):
+        rangeindicator = self.player_ranges[ability]
+        rangeindicator.visible = not rangeindicator.visible
 
     def reset_camera(self):
         campos = self.player.get_pos()
