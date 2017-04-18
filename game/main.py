@@ -23,12 +23,6 @@ CONFIG_FILES = [
 ]
 
 
-p3d.load_prc_file_data(
-    '',
-    'framebuffer-srgb true\n'
-)
-
-
 for config_file in CONFIG_FILES:
     if os.path.exists(config_file):
         print("Loading config file:", config_file)
