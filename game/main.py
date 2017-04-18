@@ -108,7 +108,7 @@ class Dungeon:
             show_recursive(spawner)
 
         # Flatten for performance (we've just place a lot of tile objects that don't move)
-        #self._tile_root.flatten_strong()
+        self._tile_root.flatten_strong()
 
         # Display the tile map for debugging
         for y in self._bsp:
