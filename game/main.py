@@ -43,6 +43,7 @@ class Dungeon:
         self.player_start = p3d.LVector3(0, 0, 0)
         self._telemap = {}
         self.spawners = []
+        self.exit_loc = p3d.LVector3(0, 0, 0)
 
         # Load models
         loader = p3d.Loader.get_global_ptr()
@@ -69,13 +70,23 @@ class Dungeon:
                     # Player start
                     self.player_start.x = tile_pos.x
                     self.player_start.y = tile_pos.y
+                elif tile == '&':
+                    # Exit
+                    self.exit_loc.x = tile_pos.x
+                    self.exit_loc.y = tile_pos.y
+
+                    exitnp = p3d.NodePath('Exit')
+                    tele_model.instance_to(exitnp)
+                    exitnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+                    exitnp.reparent_to(self.model_root)
                 elif tile == '$':
                     # Monster spawn
-                    spanwnp = p3d.NodePath('Spawn')
-                    spawn_model.instance_to(spanwnp)
-                    spanwnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
-                    spanwnp.set_h(180)
-                    self.spawners.append(spanwnp)
+                    spawnnp = p3d.NodePath('Spawn')
+                    spawn_model.instance_to(spawnnp)
+                    spawnnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+                    spawnnp.set_h(180)
+                    spawnnp.reparent_to(self.model_root)
+                    self.spawners.append(spawnnp)
                 elif tile.isdigit():
                     # Teleporter
                     telenp = self.model_root.attach_new_node('Teleporter')
@@ -109,8 +120,6 @@ class Dungeon:
             for child in node.get_children():
                 show_recursive(child)
         show_recursive(self.model_root)
-        for spawner in self.spawners:
-            show_recursive(spawner)
 
         # Flatten for performance (we've just place a lot of tile objects that don't move)
         self._tile_root.flatten_strong()
@@ -142,6 +151,11 @@ class Dungeon:
 
         return loc
 
+    def is_exit(self, x, y):
+        tilex, tiley = self._world_to_tile(x, y)
+        tile = self._bsp[tiley][tilex]
+        return tile == '&'
+
     def is_walkable(self, x, y):
         tilex, tiley = self._world_to_tile(x, y)
         tile = self._bsp[tiley][tilex]
@@ -152,6 +166,9 @@ class GameApp(ShowBase):
     PLAYER_SPEED = 15
     CAM_MOVE_BORDER = 0.8
     CAM_MOVE_SPEED = 50
+
+    DUNGEON_SX = 50
+    DUNGEON_SY = 50
 
     def __init__(self):
         ShowBase.__init__(self)
@@ -174,10 +191,8 @@ class GameApp(ShowBase):
         winprops.set_mouse_mode(p3d.WindowProperties.M_confined)
         self.win.request_properties(winprops)
 
-        dungeon = Dungeon(50, 50)
+        dungeon = Dungeon(self.DUNGEON_SX, self.DUNGEON_SY)
         dungeon.model_root.reparent_to(self.render)
-        for spawner in dungeon.spawners:
-            spawner.reparent_to(self.render)
 
         dlight = p3d.DirectionalLight('sun')
         dlight.set_color(p3d.LVector3(0.2, 0.2, 0.2))
@@ -213,6 +228,8 @@ class GameApp(ShowBase):
         # self.render.ls()
         # self.render.analyze()
 
+        self.dungeons = [dungeon]
+        self.dungeon_idx = 0
         self.dungeon = dungeon
         self.player = playernp
         self.last_tele_loc = None
@@ -266,6 +283,13 @@ class GameApp(ShowBase):
         if self.dungeon.is_walkable(*newpos.xy):
             self.player.set_pos(newpos)
 
+        if self.dungeon.is_exit(*newpos.xy):
+            next_didx = self.dungeon_idx + 1
+            if next_didx >= len(self.dungeons):
+                # Create a new dungeon
+                self.dungeons.append(Dungeon(self.DUNGEON_SX, self.DUNGEON_SY))
+            self.switch_to_dungeon(next_didx)
+
         if self.last_tele_loc is not None:
             if (self.last_tele_loc - self.player.get_pos()).length_squared() > 3:
                 self.last_tele_loc = None
@@ -317,6 +341,18 @@ class GameApp(ShowBase):
         if plane.intersects_line(worldpos, near, far):
             self.target.set_x(worldpos.x)
             self.target.set_y(worldpos.y)
+
+    def switch_to_dungeon(self, dungeon_idx):
+        # Switch to next layer
+        print("Switching to dungeon layer {}".format(dungeon_idx))
+        self.dungeon.model_root.detach_node()
+        self.dungeon = self.dungeons[dungeon_idx]
+        self.dungeon.model_root.reparent_to(self.render)
+        self.dungeon_idx = dungeon_idx
+        self.player.set_pos(self.dungeon.player_start)
+        self.player.set_z(1.5)
+        self.target = self.player.get_pos()
+        self.reset_camera()
 
 
 def main():

@@ -156,6 +156,11 @@ def gen(width, height, min_room_x=5, min_room_y=5, erosion=0.1, num_encounters=5
     coord = random.choice(island).coord
     dungeon[coord[0]][coord[1]] = '*'
 
+    # Pick an exit tile
+    cc = random.choice(ccl)
+    coord = random.choice(cc).coord
+    dungeon[coord[0]][coord[1]] = '&'
+
     # Place teleporters
     def find_coord(island):
         tile = '.'
