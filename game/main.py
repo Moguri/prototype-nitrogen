@@ -9,8 +9,10 @@ import nitrogen.bsp
 from nitrogen.rangeindicator import RangeIndicator
 from bamboo.inputmapper import InputMapper
 
-
-APP_ROOT_DIR = sys.path[0]
+if hasattr(sys, 'frozen'):
+    APP_ROOT_DIR = os.path.dirname(sys.executable)
+else:
+    APP_ROOT_DIR = os.path.dirname(__file__)
 if not APP_ROOT_DIR:
     print("emptry app_root_dir")
     sys.exit()
