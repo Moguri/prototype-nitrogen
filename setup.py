@@ -16,6 +16,10 @@ setup(
             'gui_apps': {
                 'nitrogen-game': 'game/main.py',
             },
+            'plugins': [
+                'pandagl',
+                'p3openal_audio',
+            ],
             'deploy_platforms': [
                 'manylinux1_x86_64',
             ],
