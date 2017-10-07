@@ -5,7 +5,8 @@ import sys
 from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
 import blenderpanda
-import nitrogen.bsp
+import nitrogen.mapgen.bsp
+import nitrogen.mapgen.static
 from nitrogen.rangeindicator import RangeIndicator
 from bamboo.inputmapper import InputMapper
 
@@ -35,7 +36,7 @@ for config_file in CONFIG_FILES:
 
 
 class Dungeon:
-    def __init__(self, sizex, sizey):
+    def __init__(self, tile_generator, sizex, sizey):
         self.sizex = sizex
         self.sizey = sizey
         self.model_root = p3d.NodePath('Dungeon')
@@ -54,7 +55,7 @@ class Dungeon:
         telelink_model = models.find('**/TeleLink')
 
         # Generate dungeon tile map
-        self._bsp = nitrogen.bsp.gen(sizex, sizey)
+        self._bsp = tile_generator.gen(sizex, sizey)
 
         # Parse tile map and place models
         def process_tile(x, y):
@@ -191,7 +192,9 @@ class GameApp(ShowBase):
         winprops.set_mouse_mode(p3d.WindowProperties.M_confined)
         self.win.request_properties(winprops)
 
-        dungeon = Dungeon(self.DUNGEON_SX, self.DUNGEON_SY)
+        #self.mapgen = nitrogen.mapgen.bsp;
+        self.mapgen = nitrogen.mapgen.static;
+        dungeon = Dungeon(self.mapgen, self.DUNGEON_SX, self.DUNGEON_SY)
         dungeon.model_root.reparent_to(self.render)
 
         dlight = p3d.DirectionalLight('sun')
@@ -287,7 +290,7 @@ class GameApp(ShowBase):
             next_didx = self.dungeon_idx + 1
             if next_didx >= len(self.dungeons):
                 # Create a new dungeon
-                self.dungeons.append(Dungeon(self.DUNGEON_SX, self.DUNGEON_SY))
+                self.dungeons.append(Dungeon(self.mapgen, self.DUNGEON_SX, self.DUNGEON_SY))
             self.switch_to_dungeon(next_didx)
 
         if self.last_tele_loc is not None:
