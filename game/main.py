@@ -53,50 +53,53 @@ class Dungeon:
         # Generate dungeon tile map
         self._bsp = nitrogen.bsp.gen(sizex, sizey)
 
-
         # Parse tile map and place models
+        def process_tile(x, y):
+            tile = self._bsp[y][x]
+
+            if tile != '.':
+                tilenp = self._tile_root.attach_new_node('TileNode')
+                tile_model.instance_to(tilenp)
+                tile_pos = p3d.LVector3(x - sizex / 2.0, y - sizey / 2.0, -random.random() * 0.1)
+                tilenp.set_pos(tile_pos)
+
+                if tile == '*':
+                    # Player start
+                    self.player_start.x = tile_pos.x
+                    self.player_start.y = tile_pos.y
+                elif tile == '$':
+                    # Monster spawn
+                    spanwnp = p3d.NodePath('Spawn')
+                    spawn_model.instance_to(spanwnp)
+                    spanwnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+                    spanwnp.set_h(180)
+                    self.spawners.append(spanwnp)
+                elif tile.isdigit():
+                    # Teleporter
+                    telenp = self.model_root.attach_new_node('Teleporter')
+                    tele_model.instance_to(telenp)
+                    telenp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+
+                    if tile not in self._telemap:
+                        self._telemap[tile] = [(x, y)]
+                    else:
+                        self._telemap[tile].append((x, y))
+
+                        # This is the second teleporter we found for this pair so add a link
+                        tlnp = self.model_root.attach_new_node('TeleporterLink')
+                        telelink_model.instance_to(tlnp)
+                        tlnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
+
+                        teleloc = self._tile_to_world(*self._get_tele_loc_from_tile(x, y))
+                        tovec = p3d.LVector3(teleloc, tlnp.get_z())
+                        linkvec = tovec - tlnp.get_pos()
+
+                        tlnp.set_scale(1, linkvec.length(), 1)
+                        tlnp.look_at(tovec)
+
         for y in range(len(self._bsp)):
             for x in range(len(self._bsp[y])):
-                tile = self._bsp[y][x]
-
-                if tile != '.':
-                    tilenp = self._tile_root.attach_new_node('TileNode')
-                    tile_model.instance_to(tilenp)
-                    tile_pos = p3d.LVector3(x - sizex / 2.0, y - sizey / 2.0, -random.random() * 0.1)
-                    tilenp.set_pos(tile_pos)
-
-                    if tile == '*':
-                        # Player start
-                        self.player_start.x = tile_pos.x
-                        self.player_start.y = tile_pos.y
-                    elif tile == '$':
-                        # Monster spawn
-                        spanwnp = p3d.NodePath('Spawn')
-                        spawn_model.instance_to(spanwnp)
-                        spanwnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
-                        spanwnp.set_h(180)
-                        self.spawners.append(spanwnp)
-                    elif tile.isdigit():
-                        # Teleporter
-                        telenp = self.model_root.attach_new_node('Teleporter')
-                        tele_model.instance_to(telenp)
-                        telenp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
-
-                        if tile not in self._telemap:
-                            self._telemap[tile] = [(x, y)]
-                        else:
-                            self._telemap[tile].append((x, y))
-
-                            # This is the second teleporter we found for this pair so add a link
-                            tlnp = self.model_root.attach_new_node('TeleporterLink')
-                            telelink_model.instance_to(tlnp)
-                            tlnp.set_pos(tile_pos + p3d.LVector3(0, 0, 1))
-
-                            tovec = p3d.LVector3(self._tile_to_world(*self._get_tele_loc_from_tile(x, y)), tlnp.get_z())
-                            linkvec = tovec - tlnp.get_pos()
-
-                            tlnp.set_scale(1, linkvec.length(), 1)
-                            tlnp.look_at(tovec)
+                process_tile(x, y)
 
         # Make sure all placed models are visible
         def show_recursive(node):
@@ -205,8 +208,8 @@ class GameApp(ShowBase):
             rangeindicator.graphics.reparent_to(playernp)
             rangeindicator.visible = False
 
-        #self.render.ls()
-        #self.render.analyze()
+        # self.render.ls()
+        # self.render.analyze()
 
         self.dungeon = dungeon
         self.player = playernp
@@ -314,7 +317,10 @@ class GameApp(ShowBase):
             self.target.set_y(worldpos.y)
 
 
-if __name__ == '__main__':
+def main():
     app = GameApp()
     app.run()
 
+
+if __name__ == '__main__':
+    main()
