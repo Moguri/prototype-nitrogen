@@ -4,68 +4,67 @@ import time
 import sys
 
 
-class V:
-    __slots__ = "vstate", "tile", "coord", "cc"
+Room = namedtuple('Room', 'x y width height')
 
-    def __init__(self, vstate, tile, coord, cc):
+
+class Vertex:
+    __slots__ = "vstate", "tile", "coord", "island_idx"
+
+    def __init__(self, vstate, tile, coord, island_idx):
         self.vstate = vstate
         self.tile = tile
         self.coord = coord
-        self.cc = cc
+        self.island_idx = island_idx
 
 
-def dfs(dmap):
-    G = {}
+def find_connected_components(dmap):
+    graph = {}
 
     rlimit = sys.getrecursionlimit()
     # print(rlimit, len(dmap)*len(dmap[0]))
     sys.setrecursionlimit(len(dmap) * len(dmap[0]))
 
-    for iy, vy in enumerate(dmap):
-        for ix, vy in enumerate(vy):
-            if vy in ('#', '$'):
-                coord = (iy, ix)
-                G[coord] = V(0, vy, coord, -1)
+    for idxy, tiley in enumerate(dmap):
+        for idxx, tilex in enumerate(tiley):
+            if tilex in ('#', '$'):
+                coord = (idxy, idxx)
+                graph[coord] = Vertex(0, tilex, coord, -1)
 
-    cc = 0
+    def dfs_visit(vert, island_idx):
+        def adj():
+            vert_list = []
+
+            if dmap[vert.coord[0] + 1][vert.coord[1]] in ('#', '$'):
+                vert_list.append(graph[(vert.coord[0] + 1, vert.coord[1])])
+            if dmap[vert.coord[0]][vert.coord[1] + 1] in ('#', '$'):
+                vert_list.append(graph[(vert.coord[0], vert.coord[1] + 1)])
+            if dmap[vert.coord[0] - 1][vert.coord[1]] in ('#', '$'):
+                vert_list.append(graph[(vert.coord[0] - 1, vert.coord[1])])
+            if dmap[vert.coord[0]][vert.coord[1] - 1] in ('#', '$'):
+                vert_list.append(graph[(vert.coord[0], vert.coord[1] - 1)])
+
+            return vert_list
+
+        retval = []
+
+        vert.vstate = 1
+        for next_vert in adj():
+            if next_vert.vstate == 0:
+                retval += dfs_visit(next_vert, island_idx)
+
+        vert.island_idx = island_idx
+        vert.vstate = 2
+        return retval + [vert]
+
+    island_idx = 0
     connected_components = []
-    for v in G.values():
-        if v.vstate == 0:
-            connected_components.append(dfs_visit(dmap, G, v, cc))
-            cc += 1
+    for vert in graph.values():
+        if vert.vstate == 0:
+            connected_components.append(dfs_visit(vert, island_idx))
+            island_idx += 1
 
     sys.setrecursionlimit(rlimit)
     return connected_components
-
-
-def dfs_visit(dmap, G, V, cc):
-    def adj(dmap, G, V):
-        vl = []
-
-        if dmap[V.coord[0] + 1][V.coord[1]] in ('#', '$'):
-            vl.append(G[(V.coord[0] + 1, V.coord[1])])
-        if dmap[V.coord[0]][V.coord[1] + 1] in ('#', '$'):
-            vl.append(G[(V.coord[0], V.coord[1] + 1)])
-        if dmap[V.coord[0] - 1][V.coord[1]] in ('#', '$'):
-            vl.append(G[(V.coord[0] - 1, V.coord[1])])
-        if dmap[V.coord[0]][V.coord[1] - 1] in ('#', '$'):
-            vl.append(G[(V.coord[0], V.coord[1] - 1)])
-
-        return vl
-
-    retval = []
-
-    V.vstate = 1
-    for v in adj(dmap, G, V):
-        if v.vstate == 0:
-            retval += dfs_visit(dmap, G, v, cc)
-
-    V.cc = cc
-    V.vstate = 2
-    return retval + [V]
-
-
-Room = namedtuple('Room', 'x y sw sh')
 
 
 def split(startx, starty, endx, endy, min_room_x, min_room_y):
@@ -80,90 +79,90 @@ def split(startx, starty, endx, endy, min_room_x, min_room_y):
         part = random.randint(int(rangex * 0.25), int(rangex * 0.75))
         return split(startx, starty, startx + part, endy, min_room_x, min_room_y) + \
             split(startx + part, starty, endx, endy, min_room_x, min_room_y)
-    else:
-        # Split y
-        part = random.randint(int(rangey * 0.25), int(rangey * 0.75))
-        return split(startx, starty, endx, starty + part, min_room_x, min_room_y) + \
-            split(startx, starty + part, endx, endy, min_room_x, min_room_y)
+
+    # Split y
+    part = random.randint(int(rangey * 0.25), int(rangey * 0.75))
+    return split(startx, starty, endx, starty + part, min_room_x, min_room_y) + \
+        split(startx, starty + part, endx, endy, min_room_x, min_room_y)
 
 
-def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1, num_encounters=5):
+def gen(width, height, min_room_x=5, min_room_y=5, erosion=0.1, num_encounters=5):
     seed = time.time()
     print("Generating dungeon with seed:", seed)
     random.seed(seed)
 
-    dungeon = [['.' for _ in range(sw)] for _ in range(sh)]
+    dungeon = [['.' for _ in range(width)] for _ in range(height)]
     rooms = []
 
-    rooms = split(1, 1, sw - 1, sh - 1, min_room_x, min_room_y)
+    rooms = split(1, 1, width - 1, height - 1, min_room_x, min_room_y)
 
     # Remove half the rooms at random
     rooms = random.sample(rooms, len(rooms)//2)
 
     num_tiles = 0
     for room in rooms:
-        for y in range(room.y, room.sh):
-            for x in range(room.x, room.sw):
+        for y in range(room.y, room.height):
+            for x in range(room.x, room.width):
                 dungeon[y][x] = '#'
                 num_tiles += 1
 
     # Create encounters
     for room in random.sample(rooms, num_encounters):
         # Mutate one tile into an encounter
-        y = int((room.sh - room.y) * random.gauss(0.5, 0.1) + room.y)
-        x = int((room.sw - room.x) * random.gauss(0.5, 0.1) + room.x)
+        y = int((room.height - room.y) * random.gauss(0.5, 0.1) + room.y)
+        x = int((room.width - room.x) * random.gauss(0.5, 0.1) + room.x)
         dungeon[y][x] = '$'
 
     # Erosion
     # Remove x% of tiles
     remaining = int(num_tiles * erosion)
-    #print("Eroding", remaining, "tiles")
+    # print("Eroding", remaining, "tiles")
     while remaining != 0:
-        rx = random.randint(0, sw - 1)
-        ry = random.randint(0, sh - 1)
+        randx = random.randint(0, width - 1)
+        randy = random.randint(0, height - 1)
 
-        tile = dungeon[ry][rx]
+        tile = dungeon[randy][randx]
         if tile not in ('#', '$'):
             continue
 
         factor = 0.5
-        if ry > 0 and dungeon[ry - 1][rx] == '.':
+        if randy > 0 and dungeon[randy - 1][randx] == '.':
             factor += 1
-        if ry < sh - 1 and dungeon[ry + 1][rx] == '.':
+        if randy < height - 1 and dungeon[randy + 1][randx] == '.':
             factor += 1
-        if rx > 0 and dungeon[ry][rx - 1] == '.':
+        if randx > 0 and dungeon[randy][randx - 1] == '.':
             factor += 1
-        if rx < sw - 1 and dungeon[ry][rx + 1] == '.':
+        if randx < width - 1 and dungeon[randy][randx + 1] == '.':
             factor += 1
 
         if random.random() * factor > 0.5:
-            dungeon[ry][rx] = '.'
+            dungeon[randy][randx] = '.'
             remaining -= 1
 
     # Connected components
-    ccl = dfs(dungeon)
-    #print(len(ccl))
-    #for cc in ccl:
-    #    for tile in cc:
-    #        dungeon[tile.coord[0]][tile.coord[1]] = str(tile.cc)
+    ccl = find_connected_components(dungeon)
+    # print(len(ccl))
+    # for island in ccl:
+    #     for tile in island:
+    #         dungeon[tile.coord[0]][tile.coord[1]] = str(tile.island_idx)
 
     # Remove islands that are too small
-    for cc in ccl[:]:
-        if len(cc) < 5:
-            ccl.remove(cc)
+    for island in ccl[:]:
+        if len(island) < 5:
+            ccl.remove(island)
 
     # Pick a start tile
-    cc = random.choice(ccl)
-    coord = random.choice(cc).coord
+    island = random.choice(ccl)
+    coord = random.choice(island).coord
     dungeon[coord[0]][coord[1]] = '*'
 
     # Place teleporters
-    def find_coord(cc):
+    def find_coord(island):
         tile = '.'
         coord = None
 
         while tile not in ('#', '$'):
-            x = random.choice(cc)
+            x = random.choice(island)
             tile = x.tile
             coord = x.coord
 
@@ -171,26 +170,31 @@ def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1, num_encounters=5):
 
     telcounter = 0
     islands = ccl[:]
-    for cc in ccl:
+    for island in ccl:
         for other in islands:
-            if other == cc:
+            if other == island:
                 continue
-            c1 = find_coord(cc)
-            c2 = find_coord(other)
+            coord1 = find_coord(island)
+            coord2 = find_coord(other)
 
-            dungeon[c1[0]][c1[1]] = str(telcounter)
-            dungeon[c2[0]][c2[1]] = str(telcounter)
+            dungeon[coord1[0]][coord1[1]] = str(telcounter)
+            dungeon[coord2[0]][coord2[1]] = str(telcounter)
 
             telcounter += 1
 
-        islands.remove(cc)
+        islands.remove(island)
 
     return dungeon
 
-if __name__ == '__main__':
-    d = gen(50, 50)
 
-    for y in d:
+def _test_gen():
+    dungeon = gen(50, 50)
+
+    for y in dungeon:
         for x in y:
             print(x, end=" ")
         print()
+
+
+if __name__ == '__main__':
+    _test_gen()
