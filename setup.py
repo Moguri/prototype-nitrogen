@@ -7,7 +7,7 @@ pman.build()
 
 setup(
     name='nitrogen',
-    options = {
+    options={
         'build_apps': {
             'copy_paths': [
                 ('game', '.'),
