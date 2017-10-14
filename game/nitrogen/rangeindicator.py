@@ -12,8 +12,6 @@ def _lin_remap(value, low1, high1, low2, high2):
 
 def _make_sdf_circle():
     sdfimg = p3d.PNMImage(_SDF_SIZE, _SDF_SIZE)
-    radius = _SDF_SIZE // 2 - 1
-    maxpos = 1
     maxneg = -math.sqrt(2) + 1
 
     for imgx in range(_SDF_SIZE):

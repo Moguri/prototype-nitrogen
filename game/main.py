@@ -188,14 +188,14 @@ class GameApp(ShowBase):
         winprops.set_mouse_mode(p3d.WindowProperties.M_confined)
         self.win.request_properties(winprops)
 
-        #self.mapgen = nitrogen.mapgen.bsp;
-        self.mapgen = nitrogen.mapgen.static;
+        # self.mapgen = nitrogen.mapgen.bsp
+        self.mapgen = nitrogen.mapgen.static
         dungeon = Dungeon(self.mapgen, self.DUNGEON_SX, self.DUNGEON_SY)
         dungeon.model_root.reparent_to(self.render)
 
         dlight = p3d.DirectionalLight('sun')
         dlight.set_color(p3d.LVector3(0.2, 0.2, 0.2))
-        #dlight.set_shadow_caster(True, 4096, 4096)
+        # dlight.set_shadow_caster(True, 4096, 4096)
         dlnp = self.render.attach_new_node(dlight)
         dlnp.set_z(10)
         dlnp.set_p(-90)

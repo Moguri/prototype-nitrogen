@@ -1,31 +1,29 @@
 import random
 
 
-def gen(sw, sh, num_encounters=5):
-    dungeon = [['.' for _ in range(sw)] for _ in range(sh)]
+def gen(width, height, num_encounters=5):
+    dungeon = [['.' for _ in range(width)] for _ in range(height)]
 
     # Fill the space with dungeon tiles leaving a one tile empty border
-    for y in range(1, sh - 1):
-        for x in range (1, sw - 1):
+    for y in range(1, height - 1):
+        for x in range(1, width - 1):
             dungeon[y][x] = '#'
 
     # Place the start point in the bottom left corner
     dungeon[1][1] = '*'
 
     # Place the exit in the center
-    dungeon[sh // 2][sw // 2] = '&'
+    dungeon[height // 2][width // 2] = '&'
 
     # Place some random encounters
-    for _ in range(3):
+    for _ in range(num_encounters):
         tile = ''
-        
+
         while tile != '#':
-            x = random.randrange(1, sw - 1)
-            y = random.randrange(1, sh - 1)
+            x = random.randrange(1, width - 1)
+            y = random.randrange(1, height - 1)
             tile = dungeon[y][x]
 
         dungeon[y][x] = '$'
 
-
     return dungeon
-    
