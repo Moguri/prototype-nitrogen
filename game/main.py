@@ -49,6 +49,9 @@ class Dungeon:
         # Load models
         loader = p3d.Loader.get_global_ptr()
         models = p3d.NodePath(loader.load_sync('dungeon.bam'))
+        for model in models.find_all_matches('**'):
+            # Make sure all placed models are visible
+            model.show()
         tile_model = models.find('**/DungeonTile')
         spawn_model = models.find('**/MonsterSpawn')
         tele_model = models.find('**/Teleporter')
@@ -114,13 +117,6 @@ class Dungeon:
         for y in range(len(self._bsp)):
             for x in range(len(self._bsp[y])):
                 process_tile(x, y)
-
-        # Make sure all placed models are visible
-        def show_recursive(node):
-            node.show()
-            for child in node.get_children():
-                show_recursive(child)
-        show_recursive(self.model_root)
 
         # Flatten for performance (we've just place a lot of tile objects that don't move)
         self._tile_root.flatten_strong()
