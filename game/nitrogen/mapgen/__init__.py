@@ -1,6 +1,5 @@
 __all__ = [
-    "static",
-    "bsp",
+    'dungeon'
 ]
 
-from . import bsp, static
+from . import dungeon
