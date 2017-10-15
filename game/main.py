@@ -15,7 +15,7 @@ if hasattr(sys, 'frozen'):
 else:
     APP_ROOT_DIR = os.path.dirname(__file__)
 if not APP_ROOT_DIR:
-    print("emptry app_root_dir")
+    print("empty app_root_dir")
     sys.exit()
 
 # prc files to load sorted by load order
