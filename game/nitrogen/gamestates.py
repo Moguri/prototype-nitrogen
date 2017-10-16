@@ -16,7 +16,7 @@ class GameState(DirectObject):
         self.root_node.remove_node()
         self.root_node = None
 
-    def run(self, dt):
+    def update(self, dt):
         pass
 
 
@@ -110,7 +110,7 @@ class MainState(GameState):
         base.cam.set_pos(campos)
         base.cam.look_at(self.player.get_pos())
 
-    def run(self, dt):
+    def update(self, dt):
         # Update player position
         movvec = self.target - self.player.get_pos()
         newpos = self.player.get_pos()

@@ -50,10 +50,10 @@ class GameApp(ShowBase):
 
         self.current_state = gamestates.MainState()
 
-        def run_gamestate(task):
-            self.current_state.run(p3d.ClockObject.get_global_clock().get_dt())
+        def update_gamestate(task):
+            self.current_state.update(p3d.ClockObject.get_global_clock().get_dt())
             return task.cont
-        self.taskMgr.add(run_gamestate, 'GameState')
+        self.taskMgr.add(update_gamestate, 'GameState')
 
     def change_state(self, next_state):
         self.current_state.cleanup()
