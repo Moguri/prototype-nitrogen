@@ -4,8 +4,9 @@ import sys
 from direct.showbase.ShowBase import ShowBase
 import panda3d.core as p3d
 import blenderpanda
+import inputmapper
+
 from nitrogen import gamestates
-from bamboo.inputmapper import InputMapper
 
 if hasattr(sys, 'frozen'):
     APP_ROOT_DIR = os.path.dirname(sys.executable)
@@ -37,7 +38,7 @@ class GameApp(ShowBase):
         ShowBase.__init__(self)
         blenderpanda.init(self)
 
-        self.input_mapper = InputMapper(os.path.join(CONFIG_ROOT_DIR, 'input.conf'))
+        self.input_mapper = inputmapper.InputMapper(os.path.join(CONFIG_ROOT_DIR, 'input.conf'))
 
         self.accept('quit', sys.exit)
 

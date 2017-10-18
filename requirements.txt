@@ -1,4 +1,5 @@
 pylint
 pycodestyle
+panda3d_inputmapper
 --extra-index-url https://archive.panda3d.org/branches/deploy-ng
 panda3d
